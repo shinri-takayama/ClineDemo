@@ -56,6 +56,13 @@
             注文履歴
           </button>
         </li>
+        <li v-if="user?.isAdmin">
+          <button class="dropdown-item text-primary" @click="showAdminDashboard">
+            <i class="fas fa-cogs me-2"></i>
+            管理者ダッシュボード
+          </button>
+        </li>
+        <li><hr class="dropdown-divider"></li>
         <li>
           <button class="dropdown-item text-danger" @click="handleLogout">
             <i class="fas fa-sign-out-alt me-2"></i>
@@ -165,6 +172,10 @@ export default {
     },
     showOrderHistory() {
       const modal = new bootstrap.Modal(document.getElementById('orderHistoryModal'))
+      modal.show()
+    },
+    showAdminDashboard() {
+      const modal = new bootstrap.Modal(document.getElementById('adminDashboardModal'))
       modal.show()
     },
     formatDate(dateString) {

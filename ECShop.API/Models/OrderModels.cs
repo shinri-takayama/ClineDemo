@@ -10,23 +10,23 @@ namespace ECShop.API.Models
         
         [Required]
         [MaxLength(100)]
-        public string ShippingName { get; set; }
+        public string ShippingName { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(10)]
-        public string ShippingPostalCode { get; set; }
+        public string ShippingPostalCode { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(50)]
-        public string ShippingPrefecture { get; set; }
+        public string ShippingPrefecture { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(100)]
-        public string ShippingCity { get; set; }
+        public string ShippingCity { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(200)]
-        public string ShippingAddressLine { get; set; }
+        public string ShippingAddressLine { get; set; } = string.Empty;
         
         [MaxLength(20)]
         public string? ShippingPhone { get; set; }
@@ -58,13 +58,13 @@ namespace ECShop.API.Models
         public int UserId { get; set; }
         public DateTime OrderDate { get; set; }
         public OrderStatus Status { get; set; }
-        public string StatusText { get; set; }
+        public string StatusText { get; set; } = string.Empty;
         public decimal TotalAmount { get; set; }
-        public string ShippingName { get; set; }
-        public string ShippingPostalCode { get; set; }
-        public string ShippingPrefecture { get; set; }
-        public string ShippingCity { get; set; }
-        public string ShippingAddressLine { get; set; }
+        public string ShippingName { get; set; } = string.Empty;
+        public string ShippingPostalCode { get; set; } = string.Empty;
+        public string ShippingPrefecture { get; set; } = string.Empty;
+        public string ShippingCity { get; set; } = string.Empty;
+        public string ShippingAddressLine { get; set; } = string.Empty;
         public string? ShippingPhone { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -76,7 +76,7 @@ namespace ECShop.API.Models
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
         public string? ProductDescription { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
@@ -88,7 +88,7 @@ namespace ECShop.API.Models
         public int Id { get; set; }
         public DateTime OrderDate { get; set; }
         public OrderStatus Status { get; set; }
-        public string StatusText { get; set; }
+        public string StatusText { get; set; } = string.Empty;
         public decimal TotalAmount { get; set; }
         public int ItemCount { get; set; }
     }

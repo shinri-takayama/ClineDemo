@@ -84,6 +84,9 @@
     <!-- Order History -->
     <OrderHistory />
 
+    <!-- Admin Dashboard -->
+    <AdminDashboard v-if="currentUser?.isAdmin" :current-user="currentUser" />
+
     <!-- フッター -->
     <footer class="bg-dark text-light py-4 mt-5">
       <div class="container">
@@ -107,6 +110,7 @@ import LoginForm from './components/LoginForm.vue'
 import RegisterForm from './components/RegisterForm.vue'
 import UserProfile from './components/UserProfile.vue'
 import OrderHistory from './components/OrderHistory.vue'
+import AdminDashboard from './components/AdminDashboard.vue'
 import authService from './services/authService'
 
 export default {
@@ -116,7 +120,8 @@ export default {
     LoginForm,
     RegisterForm,
     UserProfile,
-    OrderHistory
+    OrderHistory,
+    AdminDashboard
   },
   data() {
     return {

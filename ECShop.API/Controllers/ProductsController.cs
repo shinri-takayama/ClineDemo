@@ -27,11 +27,12 @@ namespace ECShop.API.Controllers
         {
             var query = _context.Products.AsQueryable();
 
-            // Search by name or description
+            // Search by name or description (case-insensitive)
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p => p.Name.Contains(search) || 
-                                        (p.Description != null && p.Description.Contains(search)));
+                var searchLower = search.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(searchLower) || 
+                                        (p.Description != null && p.Description.ToLower().Contains(searchLower)));
             }
 
             // Filter by price range
@@ -45,37 +46,40 @@ namespace ECShop.API.Controllers
                 query = query.Where(p => p.Price <= maxPrice.Value);
             }
 
+            // Get products first, then sort in memory for price sorting (SQLite limitation)
+            var products = await query.ToListAsync();
+
             // Sorting
             if (!string.IsNullOrEmpty(sortBy))
             {
                 switch (sortBy.ToLower())
                 {
                     case "price":
-                        query = sortOrder?.ToLower() == "desc" 
-                            ? query.OrderByDescending(p => p.Price)
-                            : query.OrderBy(p => p.Price);
+                        products = sortOrder?.ToLower() == "desc" 
+                            ? products.OrderByDescending(p => p.Price).ToList()
+                            : products.OrderBy(p => p.Price).ToList();
                         break;
                     case "name":
-                        query = sortOrder?.ToLower() == "desc"
-                            ? query.OrderByDescending(p => p.Name)
-                            : query.OrderBy(p => p.Name);
+                        products = sortOrder?.ToLower() == "desc"
+                            ? products.OrderByDescending(p => p.Name).ToList()
+                            : products.OrderBy(p => p.Name).ToList();
                         break;
                     case "date":
-                        query = sortOrder?.ToLower() == "desc"
-                            ? query.OrderByDescending(p => p.CreatedAt)
-                            : query.OrderBy(p => p.CreatedAt);
+                        products = sortOrder?.ToLower() == "desc"
+                            ? products.OrderByDescending(p => p.CreatedAt).ToList()
+                            : products.OrderBy(p => p.CreatedAt).ToList();
                         break;
                     default:
-                        query = query.OrderBy(p => p.Id);
+                        products = products.OrderBy(p => p.Id).ToList();
                         break;
                 }
             }
             else
             {
-                query = query.OrderBy(p => p.Id);
+                products = products.OrderBy(p => p.Id).ToList();
             }
 
-            return await query.ToListAsync();
+            return products;
         }
 
         // GET: api/Products/5

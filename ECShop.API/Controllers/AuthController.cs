@@ -66,7 +66,8 @@ namespace ECShop.API.Controllers
                     Email = user.Email,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    CreatedAt = user.CreatedAt
+                    CreatedAt = user.CreatedAt,
+                    IsAdmin = user.IsAdmin
                 }
             };
 
@@ -97,7 +98,8 @@ namespace ECShop.API.Controllers
                     Email = user.Email,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    CreatedAt = user.CreatedAt
+                    CreatedAt = user.CreatedAt,
+                    IsAdmin = user.IsAdmin
                 }
             };
 
@@ -127,7 +129,8 @@ namespace ECShop.API.Controllers
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                IsAdmin = user.IsAdmin
             };
 
             return Ok(userDto);
@@ -148,7 +151,8 @@ namespace ECShop.API.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
             };
 
             var token = new JwtSecurityToken(
