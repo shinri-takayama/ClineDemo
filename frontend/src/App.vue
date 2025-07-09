@@ -81,6 +81,9 @@
       @switch-to-login="switchToLogin" 
     />
 
+    <!-- Order History -->
+    <OrderHistory />
+
     <!-- フッター -->
     <footer class="bg-dark text-light py-4 mt-5">
       <div class="container">
@@ -103,6 +106,7 @@ import ProductList from './components/ProductList.vue'
 import LoginForm from './components/LoginForm.vue'
 import RegisterForm from './components/RegisterForm.vue'
 import UserProfile from './components/UserProfile.vue'
+import OrderHistory from './components/OrderHistory.vue'
 import authService from './services/authService'
 
 export default {
@@ -111,7 +115,8 @@ export default {
     ProductList,
     LoginForm,
     RegisterForm,
-    UserProfile
+    UserProfile,
+    OrderHistory
   },
   data() {
     return {

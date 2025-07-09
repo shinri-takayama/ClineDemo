@@ -51,6 +51,12 @@
           </button>
         </li>
         <li>
+          <button class="dropdown-item" @click="showOrderHistory">
+            <i class="fas fa-history me-2"></i>
+            注文履歴
+          </button>
+        </li>
+        <li>
           <button class="dropdown-item text-danger" @click="handleLogout">
             <i class="fas fa-sign-out-alt me-2"></i>
             ログアウト
@@ -155,6 +161,10 @@ export default {
     },
     showProfile() {
       const modal = new bootstrap.Modal(document.getElementById('profileModal'))
+      modal.show()
+    },
+    showOrderHistory() {
+      const modal = new bootstrap.Modal(document.getElementById('orderHistoryModal'))
       modal.show()
     },
     formatDate(dateString) {

@@ -9,6 +9,37 @@ const api = axios.create({
   }
 })
 
+// Request interceptor to add JWT token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor to handle authentication errors
+api.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Token expired or invalid, remove from localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      // Optionally redirect to login or emit an event
+      console.warn('Authentication failed. Please log in again.')
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const productService = {
   // 全商品を取得
   getAllProducts: () => api.get('/products'),

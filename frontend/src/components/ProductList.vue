@@ -108,7 +108,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-            <button v-if="cartItems.length > 0" type="button" class="btn btn-primary">
+            <button v-if="cartItems.length > 0" type="button" class="btn btn-primary" @click="proceedToCheckout">
               <i class="bi bi-credit-card me-1"></i>
               購入手続きへ
             </button>
@@ -116,17 +116,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Checkout Form -->
+    <CheckoutForm 
+      :cart-items="cartItems" 
+      @order-created="onOrderCreated"
+    />
   </div>
 </template>
 
 <script>
 import ProductCard from './ProductCard.vue'
+import CheckoutForm from './CheckoutForm.vue'
 import { productService } from '../services/api'
 
 export default {
   name: 'ProductList',
   components: {
-    ProductCard
+    ProductCard,
+    CheckoutForm
   },
   data() {
     return {
@@ -194,6 +202,28 @@ export default {
     },
     formatPrice(price) {
       return new Intl.NumberFormat('ja-JP').format(price)
+    },
+    proceedToCheckout() {
+      // Close cart modal
+      const cartModal = bootstrap.Modal.getInstance(document.getElementById('cartModal'))
+      cartModal.hide()
+      
+      // Open checkout modal
+      setTimeout(() => {
+        const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'))
+        checkoutModal.show()
+      }, 300)
+    },
+    onOrderCreated(order) {
+      // Clear cart
+      localStorage.removeItem('cart')
+      this.loadCart()
+      
+      // Show success message
+      alert(`注文が完了しました！\n注文番号: ${order.id}\n合計金額: ¥${this.formatPrice(order.totalAmount)}`)
+      
+      // Reload products to update stock
+      this.loadProducts()
     }
   }
 }

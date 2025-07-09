@@ -9,8 +9,10 @@ namespace ECShop.API.Data
         {
         }
 
-        public DbSet<Product> Products { get; set; }
-        public DbSet<User> Users { get; set; }
+    public DbSet<Product> Products { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,6 +39,44 @@ namespace ECShop.API.Data
                 entity.Property(e => e.LastName).HasMaxLength(50);
                 entity.HasIndex(e => e.Username).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();
+            });
+
+            // Order configuration
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.ShippingName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ShippingPostalCode).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.ShippingPrefecture).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ShippingCity).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ShippingAddressLine).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.ShippingPhone).HasMaxLength(20);
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // OrderItem configuration
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.ProductName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.ProductDescription).HasMaxLength(500);
+                
+                entity.HasOne(e => e.Order)
+                      .WithMany(o => o.OrderItems)
+                      .HasForeignKey(e => e.OrderId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                      
+                entity.HasOne(e => e.Product)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Seed data
