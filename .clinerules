@@ -1,0 +1,311 @@
+# ECShop - C# + Vue.js ECサイト開発ルール
+
+## プロジェクト概要
+- **プロジェクト名**: ECShop
+- **アーキテクチャ**: C# ASP.NET Core 8.0 Web API + Vue.js 3 フロントエンド
+- **データベース**: SQLite + Entity Framework Core
+- **認証**: JWT Bearer Token
+- **UI**: Bootstrap 5 + Font Awesome
+- **目的**: フルスタックECサイトのサンプル実装
+
+## 開発ルール
+
+### テストコード
+- **必須**: 全ての新機能・修正にはテストコードを作成
+- **カバレッジ**: C0（命令網羅）、C1（分岐網羅）、C2（条件網羅）を満たすこと
+- **テストファイル配置**: 
+  - バックエンド: `ECShop.API.Tests/`
+  - フロントエンド: `frontend/tests/`
+- **テスト命名**: `[メソッド名]_[条件]_[期待結果]`
+
+### コード品質
+- **クラス・関数の肥大化防止**:
+  - メソッド: 最大50行
+  - クラス: 最大500行
+  - Vue.jsコンポーネント: 最大300行
+  - 引数: 最大5個
+  - props: 最大10個
+- **複雑度制限**: ネストは最大4レベル
+- **単一責任原則**: 1つのクラス・関数は1つの責任のみ
+
+### エラーメッセージ・固定値管理
+- **禁止**: コード中への直接記述（マジックナンバー・ハードコーディング）
+- **使用**: 
+  - C#: `enum`、`const`、`appsettings.json`
+  - Vue.js: `constants.js`、環境変数
+- **エラーメッセージ**: 多言語対応を考慮した外部ファイル管理
+
+## コーディング規約
+
+### C# バックエンド
+
+#### 命名規則
+- **クラス・メソッド・プロパティ**: PascalCase (`ProductController`, `GetProducts`)
+- **ローカル変数・パラメータ**: camelCase (`productId`, `searchQuery`)
+- **定数**: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
+- **プライベートフィールド**: アンダースコア付きcamelCase (`_context`, `_logger`)
+
+#### 非同期処理
+- **メソッド名**: 必ず`Async`サフィックス
+- **戻り値**: `Task`または`Task<T>`
+- **await**: 必ず`ConfigureAwait(false)`を検討
+- **例**: `public async Task<ActionResult<Product>> GetProductAsync(int id)`
+
+#### null安全性
+- **nullable reference types**: 有効化必須
+- **null許容**: 適切な`?`演算子使用
+- **初期化**: `= string.Empty`、`= new List<T>()`等でデフォルト値設定
+
+#### LINQ
+- **メソッドチェーン**: 適度に改行、可読性重視
+- **複雑なクエリ**: クエリ構文使用を検討
+```csharp
+// Good
+var products = await _context.Products
+    .Where(p => p.Price >= minPrice)
+    .OrderBy(p => p.Name)
+    .ToListAsync();
+```
+
+#### 依存性注入
+- **優先**: コンストラクタインジェクション
+- **禁止**: Service Locatorパターン
+- **ライフタイム**: 適切なスコープ設定（Singleton/Scoped/Transient）
+
+#### 例外処理
+- **具体的な例外型**: `ArgumentNullException`、`InvalidOperationException`等
+- **ログ出力**: 必須、適切なログレベル設定
+- **リソース解放**: `using`文またはtry-finally
+
+### Vue.js フロントエンド
+
+#### 命名規則
+- **コンポーネント**: PascalCase (`ProductCard.vue`, `UserProfile.vue`)
+- **変数・メソッド**: camelCase (`productList`, `handleSubmit`)
+- **HTML属性**: kebab-case (`data-product-id`, `@click`)
+- **定数**: UPPER_SNAKE_CASE (`API_BASE_URL`)
+
+#### コンポーネント設計
+- **単一責任**: 1つのコンポーネントは1つの機能
+- **props定義**: 型・必須・デフォルト値を明確に
+- **emits定義**: 発行するイベントを明示
+- **Composition API**: 複雑な状態管理で使用
+```javascript
+// Good
+export default {
+  name: 'ProductCard',
+  props: {
+    product: {
+      type: Object,
+      required: true,
+      validator: (value) => value && value.id
+    }
+  },
+  emits: ['add-to-cart', 'view-details']
+}
+```
+
+#### 状態管理
+- **ローカル状態**: `data()`または`ref()`
+- **グローバル状態**: 必要に応じてVuex/Pinia検討
+- **API状態**: サービス層で管理
+
+#### API通信
+- **サービス層経由**: 直接axios呼び出し禁止
+- **エラーハンドリング**: 必須、ユーザーフレンドリーなメッセージ
+- **ローディング状態**: UI反映必須
+
+#### スタイル
+- **scoped CSS**: 必須
+- **BEM記法**: 推奨
+- **Bootstrap**: 既存クラス活用、カスタムCSS最小限
+
+## アーキテクチャ原則
+
+### 全体設計
+- **レイヤー分離**: Presentation → Business Logic → Data Access
+- **依存関係**: 上位層から下位層への単方向依存
+- **SOLID原則**: 特に単一責任・依存性逆転を重視
+- **DRY原則**: 重複コード排除、共通化推進
+
+### バックエンド設計
+
+#### Repository Pattern
+- **データアクセス抽象化**: Entity Framework経由
+- **インターフェース定義**: `IProductRepository`等
+- **実装分離**: テスタビリティ向上
+
+#### Service Layer
+- **ビジネスロジック分離**: Controllerから切り出し
+- **トランザクション管理**: サービス層で実装
+- **例**: `ProductService`, `OrderService`
+
+#### DTO Pattern
+- **内部モデル分離**: EntityとAPI契約の分離
+- **バリデーション**: DTOレベルで実装
+- **マッピング**: AutoMapper等使用検討
+
+#### Middleware
+- **横断的関心事**: 認証・ログ・例外処理・CORS
+- **パイプライン**: 適切な順序で配置
+- **カスタムミドルウェア**: 必要に応じて実装
+
+### フロントエンド設計
+
+#### Component-First
+- **再利用可能**: 汎用的なコンポーネント設計
+- **props/slots**: 柔軟性確保
+- **単体テスト**: コンポーネント単位でテスト
+
+#### Service Layer
+- **API通信抽象化**: `authService.js`, `orderService.js`
+- **エラーハンドリング**: 統一的な処理
+- **キャッシュ**: 必要に応じて実装
+
+#### State Management
+- **適切な状態管理**: ローカル vs グローバル
+- **リアクティブ**: Vue.jsの特性活用
+- **永続化**: localStorage等適切に使用
+
+## 品質基準
+
+### メトリクス
+- **メソッド**: 最大50行、引数最大5個
+- **クラス**: 最大500行、責任は単一
+- **コンポーネント**: 最大300行、props最大10個
+- **ネスト**: 最大4レベル
+- **循環的複雑度**: 最大10
+
+### パフォーマンス
+- **データベース**: N+1問題回避、適切なインデックス
+- **API**: ページネーション実装、適切なキャッシュ
+- **フロントエンド**: 遅延ローディング、バンドルサイズ最適化
+
+## プロジェクト固有ルール
+
+### SQLite制限対応
+- **decimal型集計**: メモリ上で処理（`ToListAsync()`後に`Sum()`）
+- **decimal型ORDER BY**: メモリ上でソート
+- **大文字小文字**: `ToLower()`で統一
+
+### JWT認証パターン
+- **トークン管理**: localStorage使用、適切な有効期限
+- **リフレッシュ**: 必要に応じて実装
+- **権限チェック**: Controller/Componentレベルで実装
+
+### Bootstrap 5使用方針
+- **既存クラス優先**: カスタムCSS最小限
+- **レスポンシブ**: モバイルファースト
+- **アクセシビリティ**: ARIA属性適切に使用
+
+## ファイル構造
+
+### バックエンド (ECShop.API/)
+```
+Controllers/     # APIコントローラー
+├── ProductsController.cs
+├── AuthController.cs
+├── OrdersController.cs
+└── AdminController.cs
+
+Models/          # エンティティ・DTO
+├── Product.cs
+├── User.cs
+├── Order.cs
+├── AuthModels.cs
+└── OrderModels.cs
+
+Data/            # データアクセス
+├── ECShopContext.cs
+└── SeedData.cs
+
+Services/        # ビジネスロジック（今後追加）
+├── IProductService.cs
+├── ProductService.cs
+└── ...
+
+Migrations/      # EF Core マイグレーション
+```
+
+### フロントエンド (frontend/src/)
+```
+components/      # Vue.jsコンポーネント
+├── ProductCard.vue
+├── ProductList.vue
+├── SearchFilter.vue
+├── LoginForm.vue
+└── ...
+
+services/        # API通信サービス
+├── api.js
+├── authService.js
+└── orderService.js
+
+constants/       # 定数定義（今後追加）
+├── apiEndpoints.js
+├── errorMessages.js
+└── ...
+
+utils/           # ユーティリティ（今後追加）
+├── formatters.js
+├── validators.js
+└── ...
+```
+
+## 開発フロー
+
+### 新機能開発
+1. **要件定義**: 機能仕様明確化
+2. **設計**: API設計、コンポーネント設計
+3. **テスト設計**: テストケース作成
+4. **実装**: TDD推奨
+5. **テスト**: 単体・結合テスト
+6. **レビュー**: コードレビュー実施
+7. **デプロイ**: 段階的リリース
+
+### バグ修正
+1. **再現**: バグ再現手順確認
+2. **原因調査**: ログ・デバッグ情報収集
+3. **テスト作成**: バグを検出するテスト
+4. **修正**: 最小限の変更
+5. **回帰テスト**: 既存機能への影響確認
+
+## 禁止事項
+
+### 全般
+- **マジックナンバー**: 数値の直接記述
+- **ハードコーディング**: URL、メッセージ等の直接記述
+- **グローバル変数**: 適切なスコープ管理
+- **深いネスト**: 可読性低下
+
+### バックエンド
+- **SQL直接記述**: Entity Framework使用
+- **パスワード平文**: 必ずハッシュ化
+- **機密情報**: appsettings.jsonに直接記述
+
+### フロントエンド
+- **直接DOM操作**: Vue.jsの仕組み使用
+- **グローバルCSS**: scoped CSS使用
+- **機密情報**: 環境変数使用
+
+## 推奨ツール・ライブラリ
+
+### 開発ツール
+- **IDE**: Visual Studio / VS Code
+- **デバッグ**: Chrome DevTools, Visual Studio Debugger
+- **API**: Swagger UI, Postman
+
+### テストツール
+- **C#**: xUnit, Moq, FluentAssertions
+- **Vue.js**: Jest, Vue Test Utils
+- **E2E**: Cypress（今後検討）
+
+### 品質管理
+- **静的解析**: SonarQube（今後検討）
+- **コードフォーマット**: Prettier, EditorConfig
+- **Lint**: ESLint（フロントエンド）
+
+---
+
+このルールは生きた文書として、プロジェクトの成長と共に更新していきます。
+新しい課題や改善点があれば、チーム全体で議論し、ルールを進化させましょう。
