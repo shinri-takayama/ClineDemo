@@ -16,6 +16,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ECShopContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add Repositories
+builder.Services.AddScoped<ECShop.API.Repositories.IProductRepository, ECShop.API.Repositories.ProductRepository>();
+
 // Add Services
 builder.Services.AddScoped<ECShop.API.Services.IProductService, ECShop.API.Services.ProductService>();
 

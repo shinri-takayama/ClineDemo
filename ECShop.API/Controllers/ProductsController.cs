@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using ECShop.API.Models;
 using ECShop.API.Services;
 using ECShop.API.Constants;
+using ECShop.API.DTOs;
+using ECShop.API.Mappers;
 
 namespace ECShop.API.Controllers
 {
@@ -18,35 +19,34 @@ namespace ECShop.API.Controllers
 
         // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts(
-            [FromQuery] string? search = null,
-            [FromQuery] decimal? minPrice = null,
-            [FromQuery] decimal? maxPrice = null,
-            [FromQuery] string? sortBy = null,
-            [FromQuery] string? sortOrder = "asc")
+        public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts(
+            [FromQuery] ProductSearchRequest searchRequest)
         {
             try
             {
-                var products = await _productService.SearchProductsAsync(search, minPrice, maxPrice);
+                var products = await _productService.SearchProductsAsync(
+                    searchRequest.Search, 
+                    searchRequest.MinPrice, 
+                    searchRequest.MaxPrice);
                 var productList = products.ToList();
 
                 // Sorting (SQLite limitation requires in-memory sorting)
-                if (!string.IsNullOrEmpty(sortBy))
+                if (!string.IsNullOrEmpty(searchRequest.SortBy))
                 {
-                    switch (sortBy.ToLower())
+                    switch (searchRequest.SortBy.ToLower())
                     {
                         case "price":
-                            productList = sortOrder?.ToLower() == "desc" 
+                            productList = searchRequest.SortOrder?.ToLower() == "desc" 
                                 ? productList.OrderByDescending(p => p.Price).ToList()
                                 : productList.OrderBy(p => p.Price).ToList();
                             break;
                         case "name":
-                            productList = sortOrder?.ToLower() == "desc"
+                            productList = searchRequest.SortOrder?.ToLower() == "desc"
                                 ? productList.OrderByDescending(p => p.Name).ToList()
                                 : productList.OrderBy(p => p.Name).ToList();
                             break;
                         case "date":
-                            productList = sortOrder?.ToLower() == "desc"
+                            productList = searchRequest.SortOrder?.ToLower() == "desc"
                                 ? productList.OrderByDescending(p => p.CreatedAt).ToList()
                                 : productList.OrderBy(p => p.CreatedAt).ToList();
                             break;
@@ -56,7 +56,8 @@ namespace ECShop.API.Controllers
                     }
                 }
 
-                return Ok(productList);
+                var responseList = ProductMapper.ToResponseList(productList);
+                return Ok(responseList);
             }
             catch (ArgumentException)
             {
@@ -66,7 +67,7 @@ namespace ECShop.API.Controllers
 
         // GET: api/Products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductResponse>> GetProduct(int id)
         {
             try
             {
@@ -77,7 +78,8 @@ namespace ECShop.API.Controllers
                     return NotFound(ErrorMessages.Product.PRODUCT_NOT_FOUND);
                 }
 
-                return Ok(product);
+                var response = ProductMapper.ToResponse(product);
+                return Ok(response);
             }
             catch (ArgumentException)
             {
@@ -87,10 +89,16 @@ namespace ECShop.API.Controllers
 
         // PUT: api/Products/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutProduct(int id, UpdateProductRequest request)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var product = ProductMapper.ToModel(request, id);
                 var updatedProduct = await _productService.UpdateProductAsync(id, product);
 
                 if (updatedProduct == null)
@@ -108,12 +116,20 @@ namespace ECShop.API.Controllers
 
         // POST: api/Products
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<ProductResponse>> PostProduct(CreateProductRequest request)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var product = ProductMapper.ToModel(request);
                 var createdProduct = await _productService.CreateProductAsync(product);
-                return CreatedAtAction("GetProduct", new { id = createdProduct.Id }, createdProduct);
+                var response = ProductMapper.ToResponse(createdProduct);
+                
+                return CreatedAtAction("GetProduct", new { id = createdProduct.Id }, response);
             }
             catch (ArgumentNullException)
             {
