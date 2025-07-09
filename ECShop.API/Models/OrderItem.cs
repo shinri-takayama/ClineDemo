@@ -22,13 +22,13 @@ namespace ECShop.API.Models
         
         [Required]
         [MaxLength(200)]
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
         
         [MaxLength(500)]
         public string? ProductDescription { get; set; }
         
         // Navigation properties
-        public Order Order { get; set; }
-        public Product Product { get; set; }
+        public Order Order { get; set; } = null!;
+        public Product Product { get; set; } = null!;
     }
 }

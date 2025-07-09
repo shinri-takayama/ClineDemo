@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ECShop.API.Data;
 using ECShop.API.Models;
+using ECShop.API.Constants;
+using ECShop.API.Utils;
 using System.Security.Claims;
 
 namespace ECShop.API.Controllers
@@ -25,7 +27,7 @@ namespace ECShop.API.Controllers
         {
             if (!await IsCurrentUserAdmin())
             {
-                return Forbid("管理者権限が必要です。");
+                return Forbid(ErrorMessages.Authentication.ADMIN_REQUIRED);
             }
 
             var users = await _context.Users
@@ -51,13 +53,13 @@ namespace ECShop.API.Controllers
         {
             if (!await IsCurrentUserAdmin())
             {
-                return Forbid("管理者権限が必要です。");
+                return Forbid(ErrorMessages.Authentication.ADMIN_REQUIRED);
             }
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound("ユーザーが見つかりません。");
+                return NotFound(ErrorMessages.User.USER_NOT_FOUND);
             }
 
             // Prevent removing admin status from the last admin
@@ -66,7 +68,7 @@ namespace ECShop.API.Controllers
                 var adminCount = await _context.Users.CountAsync(u => u.IsAdmin);
                 if (adminCount <= 1)
                 {
-                    return BadRequest("最後の管理者の権限を削除することはできません。");
+                    return BadRequest(ErrorMessages.User.CANNOT_REMOVE_LAST_ADMIN);
                 }
             }
 
@@ -79,13 +81,13 @@ namespace ECShop.API.Controllers
         // GET: api/admin/orders
         [HttpGet("orders")]
         public async Task<ActionResult<IEnumerable<object>>> GetAllOrders(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
+            [FromQuery] int page = ApplicationConstants.Pagination.MIN_PAGE_NUMBER,
+            [FromQuery] int pageSize = ApplicationConstants.Pagination.DEFAULT_PAGE_SIZE,
             [FromQuery] int? status = null)
         {
             if (!await IsCurrentUserAdmin())
             {
-                return Forbid("管理者権限が必要です。");
+                return Forbid(ErrorMessages.Authentication.ADMIN_REQUIRED);
             }
 
             var query = _context.Orders
@@ -109,7 +111,7 @@ namespace ECShop.API.Controllers
                     o.UserId,
                     o.OrderDate,
                     o.Status,
-                    StatusText = GetStatusText((int)o.Status),
+                    StatusText = OrderStatusHelper.GetStatusText((int)o.Status),
                     o.TotalAmount,
                     o.ShippingName,
                     ShippingEmail = "", // Not available in current model
@@ -261,22 +263,22 @@ namespace ECShop.API.Controllers
             var recentOrders = await _context.Orders
                 .Include(o => o.OrderItems)
                 .OrderByDescending(o => o.OrderDate)
-                .Take(5)
+                .Take(ApplicationConstants.Dashboard.RECENT_ORDERS_COUNT)
                 .Select(o => new
                 {
                     o.Id,
                     o.OrderDate,
                     o.TotalAmount,
                     o.ShippingName,
-                    StatusText = GetStatusText((int)o.Status),
+                    StatusText = OrderStatusHelper.GetStatusText((int)o.Status),
                     ItemCount = o.OrderItems.Count
                 })
                 .ToListAsync();
 
             var lowStockProducts = await _context.Products
-                .Where(p => p.Stock <= 5)
+                .Where(p => p.Stock <= ApplicationConstants.Stock.LOW_STOCK_THRESHOLD)
                 .OrderBy(p => p.Stock)
-                .Take(5)
+                .Take(ApplicationConstants.Dashboard.LOW_STOCK_PRODUCTS_COUNT)
                 .ToListAsync();
 
             return Ok(new
@@ -305,19 +307,6 @@ namespace ECShop.API.Controllers
             return user?.IsAdmin == true;
         }
 
-        private static string GetStatusText(int status)
-        {
-            return status switch
-            {
-                0 => "注文確認中",
-                1 => "注文確定",
-                2 => "処理中",
-                3 => "発送済み",
-                4 => "配送完了",
-                5 => "キャンセル",
-                _ => "不明"
-            };
-        }
     }
 
     public class AdminStatusRequest

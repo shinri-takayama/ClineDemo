@@ -8,6 +8,7 @@ using System.Text;
 using BCrypt.Net;
 using ECShop.API.Data;
 using ECShop.API.Models;
+using ECShop.API.Constants;
 
 namespace ECShop.API.Controllers
 {
@@ -30,13 +31,13 @@ namespace ECShop.API.Controllers
             // Check if username already exists
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
-                return BadRequest("Username already exists");
+                return BadRequest(ErrorMessages.Authentication.USERNAME_ALREADY_EXISTS);
             }
 
             // Check if email already exists
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
-                return BadRequest("Email already exists");
+                return BadRequest(ErrorMessages.Authentication.EMAIL_ALREADY_EXISTS);
             }
 
             // Create new user
@@ -82,7 +83,7 @@ namespace ECShop.API.Controllers
             
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                return BadRequest("Invalid username or password");
+                return BadRequest(ErrorMessages.Authentication.INVALID_CREDENTIALS);
             }
 
             // Generate JWT token

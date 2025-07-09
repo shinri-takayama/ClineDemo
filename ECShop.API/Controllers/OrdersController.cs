@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ECShop.API.Data;
 using ECShop.API.Models;
+using ECShop.API.Constants;
+using ECShop.API.Utils;
 using System.Security.Claims;
 
 namespace ECShop.API.Controllers
@@ -34,7 +36,7 @@ namespace ECShop.API.Controllers
                     Id = o.Id,
                     OrderDate = o.OrderDate,
                     Status = o.Status,
-                    StatusText = GetStatusText(o.Status),
+                    StatusText = OrderStatusHelper.GetStatusText(o.Status),
                     TotalAmount = o.TotalAmount,
                     ItemCount = o.OrderItems.Count
                 })
@@ -65,7 +67,7 @@ namespace ECShop.API.Controllers
                 UserId = order.UserId,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
-                StatusText = GetStatusText(order.Status),
+                StatusText = OrderStatusHelper.GetStatusText(order.Status),
                 TotalAmount = order.TotalAmount,
                 ShippingName = order.ShippingName,
                 ShippingPostalCode = order.ShippingPostalCode,
@@ -106,12 +108,12 @@ namespace ECShop.API.Controllers
                 var product = await _context.Products.FindAsync(item.ProductId);
                 if (product == null)
                 {
-                    return BadRequest($"Product with ID {item.ProductId} not found.");
+                    return BadRequest(ErrorMessages.Product.PRODUCT_NOT_FOUND);
                 }
 
                 if (product.Stock < item.Quantity)
                 {
-                    return BadRequest($"Insufficient stock for product {product.Name}. Available: {product.Stock}, Requested: {item.Quantity}");
+                    return BadRequest(ErrorMessages.Product.INSUFFICIENT_STOCK);
                 }
 
                 var orderItem = new OrderItem
@@ -159,7 +161,7 @@ namespace ECShop.API.Controllers
                 UserId = order.UserId,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
-                StatusText = GetStatusText(order.Status),
+                StatusText = OrderStatusHelper.GetStatusText(order.Status),
                 TotalAmount = order.TotalAmount,
                 ShippingName = order.ShippingName,
                 ShippingPostalCode = order.ShippingPostalCode,
@@ -213,18 +215,5 @@ namespace ECShop.API.Controllers
             return int.Parse(userIdClaim ?? "0");
         }
 
-        private static string GetStatusText(OrderStatus status)
-        {
-            return status switch
-            {
-                OrderStatus.Pending => "注文確認中",
-                OrderStatus.Confirmed => "注文確定",
-                OrderStatus.Processing => "処理中",
-                OrderStatus.Shipped => "発送済み",
-                OrderStatus.Delivered => "配送完了",
-                OrderStatus.Cancelled => "キャンセル",
-                _ => "不明"
-            };
-        }
     }
 }

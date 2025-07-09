@@ -21,23 +21,23 @@ namespace ECShop.API.Models
         
         [Required]
         [MaxLength(100)]
-        public string ShippingName { get; set; }
+        public string ShippingName { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(10)]
-        public string ShippingPostalCode { get; set; }
+        public string ShippingPostalCode { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(50)]
-        public string ShippingPrefecture { get; set; }
+        public string ShippingPrefecture { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(100)]
-        public string ShippingCity { get; set; }
+        public string ShippingCity { get; set; } = string.Empty;
         
         [Required]
         [MaxLength(200)]
-        public string ShippingAddressLine { get; set; }
+        public string ShippingAddressLine { get; set; } = string.Empty;
         
         [MaxLength(20)]
         public string? ShippingPhone { get; set; }
@@ -49,7 +49,7 @@ namespace ECShop.API.Models
         public DateTime UpdatedAt { get; set; }
         
         // Navigation properties
-        public User User { get; set; }
+        public User User { get; set; } = null!;
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
     
