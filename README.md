@@ -22,6 +22,11 @@ C# ASP.NET Core Web APIとVue.jsを使用したECサイトのサンプルアプ�
   - 注文詳細表示
   - 注文ステータス追跡
   - 配送先情報確認
+- **商品検索・フィルタリング機能**
+  - キーワード検索（商品名・説明）
+  - 価格範囲フィルタ
+  - 並び替え機能（価格・名前・日付）
+  - フィルタ状態の保存・復元
 - レスポンシブデザイン
 
 ## 技術スタック
@@ -109,6 +114,9 @@ ECShop/
 
 ### 商品API
 - `GET /api/products` - 全商品取得
+- `GET /api/products?search={keyword}` - キーワード検索
+- `GET /api/products?minPrice={min}&maxPrice={max}` - 価格範囲フィルタ
+- `GET /api/products?sortBy={field}&sortOrder={asc/desc}` - 並び替え
 - `GET /api/products/{id}` - 特定商品取得
 - `POST /api/products` - 商品作成
 - `PUT /api/products/{id}` - 商品更新
@@ -146,6 +154,9 @@ ECShop/
 - **CheckoutForm.vue** - 注文手続きフォーム
 - **OrderHistory.vue** - 注文履歴一覧表示
 - **OrderDetails.vue** - 注文詳細表示
+
+### 検索・フィルタリングコンポーネント
+- **SearchFilter.vue** - 商品検索・フィルタリングフォーム
 
 ## カート機能
 
@@ -189,13 +200,13 @@ ECShop/
 
 ## 今後の拡張予定
 
-- 商品検索・フィルタリング
 - 商品カテゴリ管理
 - 決済機能統合
 - 管理者機能
 - 商品レビュー・評価機能
 - お気に入り機能
 - クーポン・割引機能
+- 高度な検索機能（カテゴリ別検索、タグ検索）
 
 ## ライセンス
 

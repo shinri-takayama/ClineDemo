@@ -1,5 +1,12 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- Search and Filter -->
+    <SearchFilter 
+      :is-loading="loading"
+      :results-count="products.length"
+      @filters-changed="onFiltersChanged"
+    />
+
     <!-- ヘッダー -->
     <div class="row mb-4">
       <div class="col-12">
@@ -128,13 +135,15 @@
 <script>
 import ProductCard from './ProductCard.vue'
 import CheckoutForm from './CheckoutForm.vue'
+import SearchFilter from './SearchFilter.vue'
 import { productService } from '../services/api'
 
 export default {
   name: 'ProductList',
   components: {
     ProductCard,
-    CheckoutForm
+    CheckoutForm,
+    SearchFilter
   },
   data() {
     return {
@@ -155,19 +164,47 @@ export default {
     this.loadCart()
   },
   methods: {
-    async loadProducts() {
+    async loadProducts(filters = {}) {
       this.loading = true
       this.error = null
       
       try {
-        const response = await productService.getAllProducts()
-        this.products = response.data
+        const params = new URLSearchParams()
+        
+        if (filters.search) {
+          params.append('search', filters.search)
+        }
+        if (filters.minPrice !== null && filters.minPrice !== undefined) {
+          params.append('minPrice', filters.minPrice.toString())
+        }
+        if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+          params.append('maxPrice', filters.maxPrice.toString())
+        }
+        if (filters.sortBy) {
+          params.append('sortBy', filters.sortBy)
+        }
+        if (filters.sortOrder) {
+          params.append('sortOrder', filters.sortOrder)
+        }
+        
+        const url = params.toString() ? `/products?${params.toString()}` : '/products'
+        const response = await fetch(`http://localhost:5000/api${url}`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch products')
+        }
+        
+        this.products = await response.json()
       } catch (error) {
         console.error('商品の読み込みに失敗しました:', error)
         this.error = '商品の読み込みに失敗しました。ネットワーク接続を確認してください。'
       } finally {
         this.loading = false
       }
+    },
+    
+    onFiltersChanged(filters) {
+      this.loadProducts(filters)
     },
     loadCart() {
       this.cartItems = JSON.parse(localStorage.getItem('cart') || '[]')

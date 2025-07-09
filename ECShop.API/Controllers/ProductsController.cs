@@ -18,9 +18,64 @@ namespace ECShop.API.Controllers
 
         // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts(
+            [FromQuery] string? search = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string? sortOrder = "asc")
         {
-            return await _context.Products.ToListAsync();
+            var query = _context.Products.AsQueryable();
+
+            // Search by name or description
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => p.Name.Contains(search) || 
+                                        (p.Description != null && p.Description.Contains(search)));
+            }
+
+            // Filter by price range
+            if (minPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= maxPrice.Value);
+            }
+
+            // Sorting
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "price":
+                        query = sortOrder?.ToLower() == "desc" 
+                            ? query.OrderByDescending(p => p.Price)
+                            : query.OrderBy(p => p.Price);
+                        break;
+                    case "name":
+                        query = sortOrder?.ToLower() == "desc"
+                            ? query.OrderByDescending(p => p.Name)
+                            : query.OrderBy(p => p.Name);
+                        break;
+                    case "date":
+                        query = sortOrder?.ToLower() == "desc"
+                            ? query.OrderByDescending(p => p.CreatedAt)
+                            : query.OrderBy(p => p.CreatedAt);
+                        break;
+                    default:
+                        query = query.OrderBy(p => p.Id);
+                        break;
+                }
+            }
+            else
+            {
+                query = query.OrderBy(p => p.Id);
+            }
+
+            return await query.ToListAsync();
         }
 
         // GET: api/Products/5
