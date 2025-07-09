@@ -7,6 +7,11 @@ C# ASP.NET Core Web APIとVue.jsを使用したECサイトのサンプルアプ�
 - 商品一覧表示（カード形式）
 - ショッピングカート機能
 - ローカルストレージでのカート管理
+- **ユーザー認証機能**
+  - ユーザー登録・ログイン
+  - JWT トークンベース認証
+  - プロフィール管理
+  - セッション永続化
 - レスポンシブデザイン
 
 ## 技術スタック
@@ -15,12 +20,15 @@ C# ASP.NET Core Web APIとVue.jsを使用したECサイトのサンプルアプ�
 - C# ASP.NET Core 8.0
 - Entity Framework Core
 - SQLite データベース
+- **JWT 認証** (Microsoft.AspNetCore.Authentication.JwtBearer)
+- **パスワードハッシュ化** (BCrypt.Net-Next)
 - Swagger UI
 
 ### フロントエンド
 - Vue.js 3
 - Bootstrap 5
 - Axios
+- **Font Awesome** (アイコン)
 - Bootstrap Icons
 
 ## セットアップ手順
@@ -89,11 +97,17 @@ ECShop/
 
 ## API エンドポイント
 
+### 商品API
 - `GET /api/products` - 全商品取得
 - `GET /api/products/{id}` - 特定商品取得
 - `POST /api/products` - 商品作成
 - `PUT /api/products/{id}` - 商品更新
 - `DELETE /api/products/{id}` - 商品削除
+
+### 認証API
+- `POST /api/auth/register` - ユーザー登録
+- `POST /api/auth/login` - ログイン
+- `GET /api/auth/profile` - プロフィール取得 (要認証)
 
 ## 主要コンポーネント
 
@@ -107,6 +121,11 @@ ECShop/
 - カート表示モーダル
 - ローディング・エラー処理
 
+### 認証コンポーネント
+- **LoginForm.vue** - ログインフォーム
+- **RegisterForm.vue** - ユーザー登録フォーム
+- **UserProfile.vue** - プロフィール表示・ログアウト機能
+
 ## カート機能
 
 - ローカルストレージを使用してカート情報を永続化
@@ -115,11 +134,11 @@ ECShop/
 
 ## 今後の拡張予定
 
-- ユーザー認証機能
 - 注文処理機能
 - 商品検索・フィルタリング
 - 商品カテゴリ管理
 - 決済機能統合
+- 管理者機能
 
 ## ライセンス
 
