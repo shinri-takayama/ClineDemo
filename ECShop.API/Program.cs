@@ -46,12 +46,15 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Add CORS
+var corsSettings = builder.Configuration.GetSection("CorsSettings");
+var allowedOrigins = corsSettings["AllowedOrigins"]?.Split(',') ?? new[] { "http://localhost:3000", "http://localhost:8080" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080")
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });

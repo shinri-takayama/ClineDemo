@@ -2,7 +2,8 @@ import authService from './authService';
 
 class AnnouncementService {
   constructor() {
-    this.baseURL = 'http://localhost:5000/api/announcements';
+    const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:5000/api';
+    this.baseURL = `${API_BASE_URL}/announcements`;
   }
 
   /**
