@@ -13,6 +13,7 @@ namespace ECShop.API.Data
     public DbSet<User> Users { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Announcement> Announcements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,6 +78,19 @@ namespace ECShop.API.Data
                       .WithMany()
                       .HasForeignKey(e => e.ProductId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Announcement configuration
+            modelBuilder.Entity<Announcement>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Content).IsRequired().HasMaxLength(2000);
+                entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.IsPublished).HasDefaultValue(false);
+                entity.Property(e => e.PublishDate).IsRequired();
+                entity.Property(e => e.CreatedAt).IsRequired();
+                entity.Property(e => e.UpdatedAt).IsRequired();
             });
 
             // Seed data

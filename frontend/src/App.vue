@@ -25,6 +25,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <button class="nav-link btn btn-link" @click="showAnnouncements">
+                <i class="bi bi-megaphone me-1"></i>
+                お知らせ
+              </button>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="#">
                 <i class="bi bi-info-circle me-1"></i>
                 お問い合わせ
@@ -87,6 +93,9 @@
     <!-- Admin Dashboard -->
     <AdminDashboard v-if="currentUser?.isAdmin" :current-user="currentUser" />
 
+    <!-- Announcements Modal -->
+    <AnnouncementList v-if="showAnnouncementsModal" @close="closeAnnouncements" />
+
     <!-- フッター -->
     <footer class="bg-dark text-light py-4 mt-5">
       <div class="container">
@@ -111,6 +120,7 @@ import RegisterForm from './components/RegisterForm.vue'
 import UserProfile from './components/UserProfile.vue'
 import OrderHistory from './components/OrderHistory.vue'
 import AdminDashboard from './components/AdminDashboard.vue'
+import AnnouncementList from './components/AnnouncementList.vue'
 import authService from './services/authService'
 
 export default {
@@ -121,12 +131,14 @@ export default {
     RegisterForm,
     UserProfile,
     OrderHistory,
-    AdminDashboard
+    AdminDashboard,
+    AnnouncementList
   },
   data() {
     return {
       isAuthenticated: false,
-      currentUser: null
+      currentUser: null,
+      showAnnouncementsModal: false
     }
   },
   methods: {
@@ -156,26 +168,50 @@ export default {
         loginModal.show()
       }, 300)
     },
-    handleLoginSuccess(user) {
+    async handleLoginSuccess(user) {
       this.isAuthenticated = true
       this.currentUser = user
       console.log('Login successful:', user)
+      
+      // Force reactivity update
+      await this.$nextTick()
+      this.$forceUpdate()
     },
-    handleRegisterSuccess(user) {
+    async handleRegisterSuccess(user) {
       this.isAuthenticated = true
       this.currentUser = user
       console.log('Registration successful:', user)
+      
+      // Force reactivity update
+      await this.$nextTick()
+      this.$forceUpdate()
     },
     async handleLogout() {
-      // First set authentication to false
-      this.isAuthenticated = false
-      
-      // Wait for Vue to update the DOM
-      await this.$nextTick()
-      
-      // Then clear user data
-      this.currentUser = null
-      console.log('Logged out')
+      try {
+        // Clear user data first
+        this.currentUser = null
+        
+        // Wait for Vue to update the DOM
+        await this.$nextTick()
+        
+        // Then set authentication to false
+        this.isAuthenticated = false
+        
+        // Wait for another DOM update
+        await this.$nextTick()
+        
+        console.log('Logged out')
+      } catch (error) {
+        console.error('Logout error:', error)
+        // Force reload as fallback
+        window.location.reload()
+      }
+    },
+    showAnnouncements() {
+      this.showAnnouncementsModal = true
+    },
+    closeAnnouncements() {
+      this.showAnnouncementsModal = false
     },
     checkAuthStatus() {
       // Check if user is already authenticated on app load
@@ -216,5 +252,22 @@ body {
 
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* Navigation button styling */
+.nav-link.btn.btn-link {
+  color: rgba(255, 255, 255, 0.75) !important;
+  text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0.5rem 1rem;
+}
+
+.nav-link.btn.btn-link:hover {
+  color: rgba(255, 255, 255, 1) !important;
+}
+
+.nav-link.btn.btn-link:focus {
+  box-shadow: none;
 }
 </style>

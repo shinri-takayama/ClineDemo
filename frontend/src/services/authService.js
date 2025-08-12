@@ -112,6 +112,17 @@ class AuthService {
   getToken() {
     return this.token
   }
+
+  isAdmin() {
+    return this.user && this.user.isAdmin === true
+  }
+
+  getAuthHeader() {
+    if (this.token) {
+      return { 'Authorization': `Bearer ${this.token}` }
+    }
+    return {}
+  }
 }
 
 export default new AuthService()
