@@ -320,7 +320,7 @@
                       <td>{{ order.itemCount }}点</td>
                       <td>¥{{ formatPrice(order.totalAmount) }}</td>
                       <td>
-                        <button class="btn btn-sm btn-outline-info" @click="viewOrderDetails(order)">
+                        <button class="btn btn-sm btn-outline-info" @click="viewOrderDetails(order.id)">
                           詳細
                         </button>
                       </td>
@@ -334,13 +334,22 @@
       </div>
     </div>
   </div>
+  
+  <!-- Order Details Modal -->
+  <OrderDetails
+    v-if="selectedOrderId"
+    :order-id="selectedOrderId"
+    @close="onCloseOrderDetails"
+  />
 </template>
 
 <script>
 import authService from '../services/authService'
+import OrderDetails from './OrderDetails.vue'
 
 export default {
   name: 'AdminDashboard',
+  components: { OrderDetails },
   props: {
     currentUser: {
       type: Object,
@@ -356,7 +365,8 @@ export default {
       products: [],
       productsLoading: false,
       orders: [],
-      ordersLoading: false
+      ordersLoading: false,
+      selectedOrderId: null
     }
   },
   methods: {
@@ -510,8 +520,28 @@ export default {
       }
     },
 
-    viewOrderDetails(order) {
-      alert(`注文 #${order.id} の詳細表示機能は今後実装予定です。`)
+    async viewOrderDetails(orderId) {
+      // 注文IDセット
+      this.selectedOrderId = orderId
+
+      // OrderDetails が描画されるのを待つ
+      await this.$nextTick()
+
+      // 詳細モーダルを開く
+      const detailsEl = document.getElementById('orderDetailsModal')
+      if (!detailsEl) {
+        console.error('orderDetailsModal が見つかりません（OrderDetails側のIDを確認）')
+        return
+      }
+      const detailsModal = bootstrap.Modal.getInstance(detailsEl) || new bootstrap.Modal(detailsEl)
+      detailsModal.show()
+    },
+
+    onCloseOrderDetails() {
+      this.selectedOrderId = null
+      const adminEl = document.getElementById('adminDashboardModal')
+      const adminModal = bootstrap.Modal.getInstance(adminEl) || new bootstrap.Modal(adminEl)
+      adminModal.show()
     },
 
     formatPrice(price) {
