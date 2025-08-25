@@ -334,27 +334,35 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Order Details Modal -->
   <OrderDetails
     v-if="selectedOrderId"
     :order-id="selectedOrderId"
     @close="onCloseOrderDetails"
   />
+
+  <!-- Product Form Modal -->
+  <ProductFormModal
+    ref="productFormModal"
+    :product="selectedProduct"
+    @save="handleSaveProduct"
+  />
 </template>
 
 <script>
+import { Modal } from 'bootstrap'
+import { productService } from '../services/api'
 import authService from '../services/authService'
 import OrderDetails from './OrderDetails.vue'
+import ProductFormModal from './ProductFormModal.vue'
+
 
 export default {
   name: 'AdminDashboard',
-  components: { OrderDetails },
+  components: { OrderDetails, ProductFormModal },
   props: {
-    currentUser: {
-      type: Object,
-      required: true
-    }
+    currentUser: { type: Object, required: true }
   },
   data() {
     return {
@@ -366,7 +374,8 @@ export default {
       productsLoading: false,
       orders: [],
       ordersLoading: false,
-      selectedOrderId: null
+      selectedOrderId: null,
+      selectedProduct: null
     }
   },
   methods: {
@@ -374,13 +383,9 @@ export default {
       this.dashboardLoading = true
       try {
         const response = await fetch('http://localhost:5000/api/admin/dashboard', {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`
-          }
+          headers: { 'Authorization': `Bearer ${authService.getToken()}` }
         })
-        if (response.ok) {
-          this.dashboardData = await response.json()
-        }
+        if (response.ok) this.dashboardData = await response.json()
       } catch (error) {
         console.error('Failed to load dashboard:', error)
       } finally {
@@ -392,13 +397,9 @@ export default {
       this.usersLoading = true
       try {
         const response = await fetch('http://localhost:5000/api/admin/users', {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`
-          }
+          headers: { 'Authorization': `Bearer ${authService.getToken()}` }
         })
-        if (response.ok) {
-          this.users = await response.json()
-        }
+        if (response.ok) this.users = await response.json()
       } catch (error) {
         console.error('Failed to load users:', error)
       } finally {
@@ -410,13 +411,9 @@ export default {
       this.productsLoading = true
       try {
         const response = await fetch('http://localhost:5000/api/admin/products', {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`
-          }
+          headers: { 'Authorization': `Bearer ${authService.getToken()}` }
         })
-        if (response.ok) {
-          this.products = await response.json()
-        }
+        if (response.ok) this.products = await response.json()
       } catch (error) {
         console.error('Failed to load products:', error)
       } finally {
@@ -428,9 +425,7 @@ export default {
       this.ordersLoading = true
       try {
         const response = await fetch('http://localhost:5000/api/admin/orders', {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`
-          }
+          headers: { 'Authorization': `Bearer ${authService.getToken()}` }
         })
         if (response.ok) {
           const data = await response.json()
@@ -453,7 +448,6 @@ export default {
           },
           body: JSON.stringify({ isAdmin: !user.isAdmin })
         })
-        
         if (response.ok) {
           user.isAdmin = !user.isAdmin
           alert(`ユーザー「${user.username}」の管理者権限を更新しました。`)
@@ -477,12 +471,9 @@ export default {
           },
           body: JSON.stringify({ status: parseInt(newStatus) })
         })
-        
         if (response.ok) {
           const order = this.orders.find(o => o.id === orderId)
-          if (order) {
-            order.status = parseInt(newStatus)
-          }
+          if (order) order.status = parseInt(newStatus)
           alert('注文ステータスを更新しました。')
         }
       } catch (error) {
@@ -491,12 +482,46 @@ export default {
       }
     },
 
+    // 商品追加
     showAddProductForm() {
-      alert('商品追加機能は今後実装予定です。')
+      this.selectedProduct = null
+      this.$nextTick(() => {
+        this.$refs.productFormModal?.show()
+      })
     },
 
+    // 編集
     editProduct(product) {
-      alert(`商品「${product.name}」の編集機能は今後実装予定です。`)
+      this.selectedProduct = { ...product }
+      this.$nextTick(() => {
+        this.$refs.productFormModal?.show()
+      })
+    },
+
+    async handleSaveProduct(form, editingId) {
+      const isNew = !editingId
+      // フラット DTO。POST では id を送らない。PUT は本文にも id を含める必要あり。
+      const dto = {
+        name: form.name,
+        description: form.description,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        imageUrl: form.imageUrl || ''
+      }
+      try {
+        if (isNew) {
+          await productService.create(dto)
+        } else {
+          await productService.update(editingId, dto) // 本文に id がマージされて送信される
+        }
+          alert(`商品の${isNew ? '登録' : '更新'}に成功しました。`)
+          this.selectedProduct = null
+          this.$refs.productFormModal?.hide()
+          this.loadProducts()
+      } catch (error) {
+        console.error('Failed to save product:', error)
+        alert(`商品の${isNew ? '登録' : '更新'}に失敗しました。`)
+      }
     },
 
     async deleteProduct(product) {
@@ -504,11 +529,8 @@ export default {
         try {
           const response = await fetch(`http://localhost:5000/api/admin/products/${product.id}`, {
             method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${authService.getToken()}`
-            }
+            headers: { 'Authorization': `Bearer ${authService.getToken()}` }
           })
-          
           if (response.ok) {
             this.products = this.products.filter(p => p.id !== product.id)
             alert('商品を削除しました。')
@@ -521,40 +543,33 @@ export default {
     },
 
     async viewOrderDetails(orderId) {
-      // 注文IDセット
       this.selectedOrderId = orderId
-
-      // OrderDetails が描画されるのを待つ
       await this.$nextTick()
-
-      // 詳細モーダルを開く
       const detailsEl = document.getElementById('orderDetailsModal')
       if (!detailsEl) {
         console.error('orderDetailsModal が見つかりません（OrderDetails側のIDを確認）')
         return
       }
-      const detailsModal = bootstrap.Modal.getInstance(detailsEl) || new bootstrap.Modal(detailsEl)
+      const detailsModal = Modal.getInstance(detailsEl) || new Modal(detailsEl)
       detailsModal.show()
     },
 
     onCloseOrderDetails() {
       this.selectedOrderId = null
       const adminEl = document.getElementById('adminDashboardModal')
-      const adminModal = bootstrap.Modal.getInstance(adminEl) || new bootstrap.Modal(adminEl)
+      const adminModal = Modal.getInstance(adminEl) || new Modal(adminEl)
       adminModal.show()
     },
 
     formatPrice(price) {
       return new Intl.NumberFormat('ja-JP').format(price)
     },
-
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString('ja-JP')
     }
   },
 
   mounted() {
-    // Load initial data when modal is shown
     const modal = document.getElementById('adminDashboardModal')
     if (modal) {
       modal.addEventListener('shown.bs.modal', () => {
@@ -573,46 +588,25 @@ export default {
   height: calc(100vh - 120px);
   overflow-y: auto;
 }
-
 .nav-tabs .nav-link {
   border: none;
   border-bottom: 2px solid transparent;
 }
-
 .nav-tabs .nav-link.active {
   border-bottom-color: #007bff;
   background-color: transparent;
 }
-
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.opacity-75 {
-  opacity: 0.75;
-}
-
-.timeline {
-  position: relative;
-}
-
+.card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+.opacity-75 { opacity: 0.75; }
+.timeline { position: relative; }
 .timeline::before {
   content: '';
   position: absolute;
-  left: 1rem;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #dee2e6;
+  left: 1rem; top: 0; bottom: 0;
+  width: 2px; background: #dee2e6;
 }
-
 .table th {
-  font-weight: 600;
-  color: #495057;
-  border-top: none;
+  font-weight: 600; color: #495057; border-top: none;
 }
-
-.badge {
-  font-size: 0.75rem;
-}
+.badge { font-size: 0.75rem; }
 </style>
