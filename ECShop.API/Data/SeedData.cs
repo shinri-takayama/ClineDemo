@@ -51,74 +51,73 @@ namespace ECShop.API.Data
                 Console.WriteLine("サンプル商品を投入しました。件数: {0}", products.Count);
             }
 
-            // 3) サンプル注文が無ければ投入（ユーザー1名・商品2品以上が前提）
+            // 3) サンプル注文が無ければ投入
             if (!await context.Orders.AnyAsync())
             {
                 var user = await context.Users.OrderBy(u => u.Id).FirstAsync();
                 var products = await context.Products.OrderBy(p => p.Id).ToListAsync();
-                if (products.Count >= 2)
-                {
-                    var p1 = products[0];
-                    var p2 = products[1];
-                    var p3 = products.Count > 2 ? products[2] : products[1];
 
-                    // 注文1：処理中
+                if (products.Count >= 3)
+                {
+                    var now = DateTime.UtcNow;
+
+                    // 注文1: 注文確認中
                     var o1 = new Order
                     {
-                        UserId       = user.Id,
-                        ShippingName = $"{(string.IsNullOrWhiteSpace(user.FirstName) ? "山田" : user.FirstName)} {(string.IsNullOrWhiteSpace(user.LastName) ? "太郎" : user.LastName)}",
-                        OrderDate    = DateTime.UtcNow.AddDays(-2),
-                        UpdatedAt    = DateTime.UtcNow.AddDays(-1),
-                        Status       = OrderStatus.Processing,
-                        OrderItems   = new List<OrderItem>
+                        UserId             = user.Id,
+                        OrderDate          = now.AddMinutes(-20),
+                        UpdatedAt          = now.AddMinutes(-18),
+                        Status             = OrderStatus.Pending, // 0 = 注文確認中
+                        ShippingName       = "高山 真理",
+                        ShippingPostalCode = "2200022",
+                        ShippingPrefecture = "神奈川県",
+                        ShippingCity       = "横浜市西区",
+                        ShippingAddressLine= "花咲町（４〜７丁目）",
+                        ShippingPhone      = "12312345678",
+                        Notes              = null,
+                        CreatedAt          = now,
+                        OrderItems = new List<OrderItem>
                         {
-                            new OrderItem { ProductId = p1.Id, Quantity = 1, Price = p1.Price },
-                            new OrderItem { ProductId = p2.Id, Quantity = 2, Price = p2.Price }
+                            new OrderItem { ProductId = products[1].Id, Quantity = 2, Price = products[1].Price }, // MacBook Air M3
+                            new OrderItem { ProductId = products[0].Id, Quantity = 2, Price = products[0].Price }, // AirPods Pro
+                            new OrderItem { ProductId = products[2].Id, Quantity = 1, Price = products[2].Price }  // Magic Keyboard
                         }
                     };
                     o1.TotalAmount = o1.OrderItems.Sum(i => i.Price * i.Quantity);
 
-                    // 注文2：発送済み
+                    // 注文2: 配送完了
                     var o2 = new Order
                     {
-                        UserId       = user.Id,
-                        ShippingName = o1.ShippingName,
-                        OrderDate    = DateTime.UtcNow.AddDays(-5),
-                        UpdatedAt    = DateTime.UtcNow.AddDays(-3),
-                        Status       = OrderStatus.Shipped,
-                        OrderItems   = new List<OrderItem>
+                        UserId             = user.Id,
+                        OrderDate          = now.AddMinutes(-40),
+                        UpdatedAt          = now.AddMinutes(-30),
+                        Status             = OrderStatus.Delivered, // 4 = 配送完了
+                        ShippingName       = "高山 真理",
+                        ShippingPostalCode = "2200022",
+                        ShippingPrefecture = "神奈川県",
+                        ShippingCity       = "横浜市西区",
+                        ShippingAddressLine= "花咲町（４〜７丁目）",
+                        ShippingPhone      = "12312345678",
+                        Notes              = null,
+                        CreatedAt          = now,
+                        OrderItems = new List<OrderItem>
                         {
-                            new OrderItem { ProductId = p3.Id, Quantity = 1, Price = p3.Price }
+                            new OrderItem { ProductId = products.Last().Id, Quantity = 1, Price = 31500m, Product = new Product { Name="shinri Pro１", Description="とおれ！！", Price=31500m, Stock=5, CreatedAt=now } }
                         }
                     };
                     o2.TotalAmount = o2.OrderItems.Sum(i => i.Price * i.Quantity);
 
-                    // 注文3：配送完了
-                    var o3 = new Order
-                    {
-                        UserId       = user.Id,
-                        ShippingName = o1.ShippingName,
-                        OrderDate    = DateTime.UtcNow.AddDays(-9),
-                        UpdatedAt    = DateTime.UtcNow.AddDays(-7),
-                        Status       = OrderStatus.Delivered,
-                        OrderItems   = new List<OrderItem>
-                        {
-                            new OrderItem { ProductId = p2.Id, Quantity = 1, Price = p2.Price },
-                            new OrderItem { ProductId = p1.Id, Quantity = 1, Price = p1.Price }
-                        }
-                    };
-                    o3.TotalAmount = o3.OrderItems.Sum(i => i.Price * i.Quantity);
-
-                    context.Orders.AddRange(o1, o2, o3);
+                    context.Orders.AddRange(o1, o2);
                     await context.SaveChangesAsync();
 
-                    Console.WriteLine("サンプル注文を投入しました。件数: 3");
+                    Console.WriteLine("サンプル注文を投入しました。件数: 2");
                 }
                 else
                 {
-                    Console.WriteLine("サンプル注文の投入をスキップ：商品が2点未満です。");
+                    Console.WriteLine("サンプル注文の投入をスキップ：商品が3点未満です。");
                 }
             }
+
         }
     }
 }
